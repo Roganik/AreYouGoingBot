@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types.Enums;
-using static AreYouGoingBot.Commands;
+using static AreYouGoingBot.Constants.InputMessages;
 using static AreYouGoingBot.RegexPatterns;
 
 namespace AreYouGoingBot
@@ -15,11 +16,11 @@ namespace AreYouGoingBot
     {
         private const int DefaultAttendersLimit = 6;
 
-        private static Dictionary<long, int> _attendersLimitForChat = new Dictionary<long, int>();
+        private static Dictionary<long, int> _attendersLimitForChat = new();
 
         private static TelegramBotClient _client;
 
-        private static List<ChatUser> _attenders = new List<ChatUser>();
+        private static Dictionary<long, List<ChatUser>> _attenders = new();
 
         public static void Main()
         {
@@ -57,7 +58,7 @@ namespace AreYouGoingBot
 
             var task = message.Text switch
             {
-                AddUser => Add(chatUser),
+                AddUser => AddChatUserAndShowList(chatUser),
                 RemoveUser => Remove(chatUser),
                 WhoIsGoing => ShowList(chatUser.ChatId),
                 ClearList => Task.Run(() => Clear(chatUser.ChatId)),
@@ -70,31 +71,55 @@ namespace AreYouGoingBot
             await task;
         }
 
-        private static async Task Add(ChatUser chatUser)
+        private static async Task AddChatUserAndShowList(ChatUser chatUser)
         {
-            if (_attenders.Count < GetAttendersLimitByChatOrDefault(chatUser.ChatId))
+            var file = $"{chatUser.ChatId}.txt";
+
+            if (!File.Exists(file))
             {
-                _attenders.Add(chatUser);
+                File.Create(file);
+            }
+
+            if (GetAttendersCount(chatUser.ChatId) == 0)
+            {
+                _attenders[chatUser.ChatId] = new List<ChatUser>();
+                _attenders[chatUser.ChatId].AddRange(File.ReadLines(file)
+                    .Select(username => new ChatUser(chatUser.ChatId, username))
+                    .ToList());
+            }
+
+            if (GetAttendersCount(chatUser.ChatId) < GetAttendersLimitByChatOrDefault(chatUser.ChatId))
+            {
+                _attenders[chatUser.ChatId].Add(chatUser);
+
+                await File.AppendAllTextAsync(file, chatUser.Username + Environment.NewLine);
+
                 await ShowList(chatUser.ChatId);
             }
         }
 
         private static async Task Remove(ChatUser chatUser)
         {
-            var attender = _attenders.Last(cu => cu == chatUser);
-            _attenders.Remove(attender);
+            var attender = _attenders.Get(chatUser.ChatId).Last(cu => cu == chatUser);
+            _attenders.Get(chatUser.ChatId).Remove(attender);
+            var usernames = _attenders[chatUser.ChatId].Select(x => x.Username).ToList();
+            await File.WriteAllTextAsync($"{chatUser.ChatId}.txt",  string.Join(Environment.NewLine, usernames));
 
             await ShowList(chatUser.ChatId);
         }
 
         private static async Task AddRange(int attendersNumber, ChatUser chatUser)
         {
-            var remainingPlaces = GetAttendersLimitByChatOrDefault(chatUser.ChatId) - _attenders.Count;
+            var remainingPlaces = GetAttendersLimitByChatOrDefault(chatUser.ChatId) - GetAttendersCount(chatUser.ChatId);
             var users = Enumerable.Range(0, attendersNumber)
                 .Select(x => chatUser)
-                .Take(Math.Min(remainingPlaces, attendersNumber));
+                .Take(Math.Min(remainingPlaces, attendersNumber))
+                .ToList();
 
-            _attenders.AddRange(users);
+            _attenders.Get(chatUser.ChatId).AddRange(users);
+            var file = $"{chatUser.ChatId}.txt";
+            var usernames = _attenders.Get(chatUser.ChatId).Select(x => x.Username).ToList();
+            await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, usernames));
 
             await ShowList(chatUser.ChatId);
         }
@@ -110,11 +135,26 @@ namespace AreYouGoingBot
 
         private static string GetList(long chatId)
         {
+            var file = $"{chatId}.txt";
+
+            if (!File.Exists(file))
+            {
+                File.Create(file);
+            }
+
+            if (GetAttendersCount(chatId) == 0)
+            {
+                _attenders[chatId] = new List<ChatUser>();
+                _attenders[chatId].AddRange(File.ReadLines(file)
+                    .Select(username => new ChatUser(chatId, username))
+                    .ToList());
+            }
+
             var text =  string.Join(Environment.NewLine, _attenders
-                .Where(chatUser => chatUser.ChatId == chatId)
+                .Get(chatId)
                 .Select((chatUser, index) => $"{index+1}. {chatUser.Username}" ));
 
-            if (_attenders.Count == GetAttendersLimitByChatOrDefault(chatId))
+            if (GetAttendersCount(chatId) == GetAttendersLimitByChatOrDefault(chatId))
             {
                 text += "\r\nНабор закрыт.";
             }
@@ -124,7 +164,13 @@ namespace AreYouGoingBot
 
         private static void Clear(long chatId)
         {
-            _attenders.RemoveAll(chatUser => chatUser.ChatId == chatId);
+            _attenders.Get(chatId).Clear();
+            var file = $"{chatId}.txt";
+
+            if (File.Exists(file))
+            {
+                File.WriteAllText($"{chatId}.txt", string.Empty);
+            }
         }
 
         private static async Task SetLimit(int limit, long chatId)
@@ -132,9 +178,11 @@ namespace AreYouGoingBot
             _attendersLimitForChat[chatId] = limit;
             await ShowLimit(chatId);
 
-            if (_attenders.Count >= limit)
+            if (GetAttendersCount(chatId) >= limit)
             {
-                _attenders = _attenders.Take(limit).ToList();
+                _attenders[chatId] = _attenders.Get(chatId).Take(limit).ToList();
+                var usernames = _attenders[chatId].Select(x => x.Username).ToList();
+                await File.WriteAllTextAsync($"{chatId}.txt",  string.Join(Environment.NewLine, usernames));
                 await ShowList(chatId);
             }
         }
@@ -179,6 +227,11 @@ namespace AreYouGoingBot
         private static string GetDigitsFromString(string text)
         {
             return Regex.Replace(text, @"\D", "");
+        }
+
+        private static int GetAttendersCount(long chatId)
+        {
+            return _attenders.Get(chatId)?.Count ?? 0;
         }
     }
 }

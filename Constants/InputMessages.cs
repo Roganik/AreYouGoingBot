@@ -1,6 +1,6 @@
-﻿namespace AreYouGoingBot
+﻿namespace AreYouGoingBot.Constants
 {
-    public static class Commands
+    public static class InputMessages
     {
         public const string AddUser = "+";
 
