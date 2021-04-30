@@ -14,7 +14,7 @@ namespace AreYouGoingBot
 {
     public class Program
     {
-        private const int DefaultAttendersLimit = 6;
+        private const int DefaultAttendersLimit = 9;
 
         private static Dictionary<long, int> _attendersLimitForChat = new();
 
@@ -164,7 +164,7 @@ namespace AreYouGoingBot
 
         private static void Clear(long chatId)
         {
-            _attenders.Get(chatId).Clear();
+            _attenders?.Get(chatId)?.Clear();
             var file = $"{chatId}.txt";
 
             if (File.Exists(file))
