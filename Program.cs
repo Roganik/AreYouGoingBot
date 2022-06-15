@@ -14,7 +14,7 @@ namespace AreYouGoingBot
 {
     public class Program
     {
-        private const int DefaultAttendersLimit = 9;
+        private const int DefaultAttendersLimit = 15;
 
         private static Dictionary<long, int> _attendersLimitForChat = new();
 
@@ -43,35 +43,58 @@ namespace AreYouGoingBot
 
         private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
         {
-            var message = messageEventArgs.Message;
-            if (message?.Type != MessageType.Text)
+            try
             {
-                return;
-            }
-            var username = $"{message.From.FirstName} {message.From.LastName}";
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                username = message.From.Username;
-            }
+                var message = messageEventArgs.Message;
+                if (message?.Type != MessageType.Text)
+                {
+                    return;
+                }
+                var username = $"{message.From.FirstName} {message.From.LastName}";
+                if (string.IsNullOrWhiteSpace(username))
+                {
+                    username = message.From.Username;
+                }
 
-            var chatUser = new ChatUser(message.Chat.Id, username);
+                var chatUser = new ChatUser(message.Chat.Id, username);
 
-            var task = message.Text switch
+                var task = message.Text switch
+                {
+                    AddUser => AddChatUserAndShowList(chatUser),
+                    RemoveUser => Remove(chatUser),
+                    WhoIsGoing => ShowList(chatUser.ChatId),
+                    ClearList => Task.Run(() => Clear(chatUser.ChatId)),
+                    WhatIsTheLimit => ShowLimit(chatUser.ChatId),
+                    var text when new Regex(SetLimitPattern).IsMatch(text) => SetLimit(GetLimit(text), chatUser.ChatId),
+                    // var text when new Regex(AddRangeByNumberPattern).IsMatch(text) => AddRange(GetAttendersByNumber(text), chatUser),
+                    // var text when new Regex(AddRangeByPlusesPattern).IsMatch(text) => AddRange(GetAttendersByPluses(text), chatUser),
+                    _ => Task.Run(() => { })
+                };
+                
+                await task;
+            }
+            catch (Exception e)
             {
-                AddUser => AddChatUserAndShowList(chatUser),
-                RemoveUser => Remove(chatUser),
-                WhoIsGoing => ShowList(chatUser.ChatId),
-                ClearList => Task.Run(() => Clear(chatUser.ChatId)),
-                WhatIsTheLimit => ShowLimit(chatUser.ChatId),
-                var text when new Regex(SetLimitPattern).IsMatch(text) => SetLimit(GetLimit(text), chatUser.ChatId),
-                var text when new Regex(AddRangeByNumberPattern).IsMatch(text) => AddRange(GetAttendersByNumber(text), chatUser),
-                var text when new Regex(AddRangeByPlusesPattern).IsMatch(text) => AddRange(GetAttendersByPluses(text), chatUser),
-                _ => Task.Run(() => { })
-            };
-            await task;
+                Console.WriteLine(e);
+            }
         }
 
         private static async Task AddChatUserAndShowList(ChatUser chatUser)
+        {
+            var file = CheckFileAndFillAttendersList(chatUser);
+
+            if (GetAttendersCount(chatUser.ChatId) < GetAttendersLimitByChatOrDefault(chatUser.ChatId) &&
+                !_attenders[chatUser.ChatId].Contains(chatUser))
+            {
+                _attenders[chatUser.ChatId].Add(chatUser);
+
+                await File.AppendAllTextAsync(file, chatUser.Username + Environment.NewLine);
+
+                await ShowList(chatUser.ChatId);
+            }
+        }
+
+        private static string CheckFileAndFillAttendersList(ChatUser chatUser)
         {
             var file = $"{chatUser.ChatId}.txt";
 
@@ -88,18 +111,13 @@ namespace AreYouGoingBot
                     .ToList());
             }
 
-            if (GetAttendersCount(chatUser.ChatId) < GetAttendersLimitByChatOrDefault(chatUser.ChatId))
-            {
-                _attenders[chatUser.ChatId].Add(chatUser);
-
-                await File.AppendAllTextAsync(file, chatUser.Username + Environment.NewLine);
-
-                await ShowList(chatUser.ChatId);
-            }
+            return file;
         }
 
         private static async Task Remove(ChatUser chatUser)
         {
+            CheckFileAndFillAttendersList(chatUser);
+            
             var attender = _attenders.Get(chatUser.ChatId).Last(cu => cu == chatUser);
             _attenders.Get(chatUser.ChatId).Remove(attender);
             var usernames = _attenders[chatUser.ChatId].Select(x => x.Username).ToList();
@@ -156,7 +174,7 @@ namespace AreYouGoingBot
 
             if (GetAttendersCount(chatId) == GetAttendersLimitByChatOrDefault(chatId))
             {
-                text += "\r\nНабор закрыт.";
+                text += "\r\nRecruitment Closed.";
             }
 
             return text;
@@ -190,7 +208,7 @@ namespace AreYouGoingBot
         private static async Task ShowLimit(long chatId)
         {
             var limit = GetAttendersLimitByChatOrDefault(chatId);
-            var text = $"Текущий лимит участников: {limit}.";
+            var text = $"Limit: {limit}.";
 
             await _client.SendTextMessageAsync(chatId, text);
         }
