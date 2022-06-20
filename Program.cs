@@ -165,23 +165,7 @@ namespace AreYouGoingBot
 
             await ShowList(chatUser.ChatId);
         }
-
-        private static async Task AddRange(int attendersNumber, ChatUser chatUser)
-        {
-            var remainingPlaces = GetAttendersLimitByChatOrDefault(chatUser.ChatId) - GetAttendersCount(chatUser.ChatId);
-            var users = Enumerable.Range(0, attendersNumber)
-                .Select(x => chatUser)
-                .Take(Math.Min(remainingPlaces, attendersNumber))
-                .ToList();
-
-            _attenders.Get(chatUser.ChatId).AddRange(users);
-            var file = $"{chatUser.ChatId}.txt";
-            var usernames = _attenders.Get(chatUser.ChatId).Select(x => x.Username).ToList();
-            await File.WriteAllTextAsync(file, string.Join(Environment.NewLine, usernames));
-
-            await ShowList(chatUser.ChatId);
-        }
-
+        
         private static async Task ShowList(long chatId)
         {
             var text = GetList(chatId);
@@ -268,18 +252,6 @@ namespace AreYouGoingBot
             return !int.TryParse(GetDigitsFromString(text), out var limit)
                 ? DefaultAttendersLimit
                 : limit;
-        }
-
-        private static int GetAttendersByPluses(string text)
-        {
-            return text.Count(x => x == '+');
-        }
-
-        private static int GetAttendersByNumber(string text)
-        {
-            int.TryParse(GetDigitsFromString(text), out var newAttenders);
-
-            return newAttenders;
         }
 
         private static string GetDigitsFromString(string text)
