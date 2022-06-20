@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using static AreYouGoingBot.Constants.InputMessages;
 using static AreYouGoingBot.RegexPatterns;
+using File = System.IO.File;
 
 namespace AreYouGoingBot
 {
@@ -26,14 +29,22 @@ namespace AreYouGoingBot
         {
             Console.WriteLine("Enter bot token:");
             var token = Console.ReadLine();
+            
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            
+            
             try
             {
                 _client = new TelegramBotClient(token);
-                _client.OnMessage += BotOnMessageReceived;
-                _client.OnMessageEdited += BotOnMessageReceived;
-                _client.StartReceiving();
+                _client.StartReceiving(
+                    updateHandler: HandleUpdateAsync,
+                    pollingErrorHandler: PollingErrorHandler,
+                    cancellationToken: cancellationToken
+                );
                 Console.ReadLine();
-                _client.StopReceiving();
+                
+                cts.Cancel(); // stop receiving updates
             }
             catch (Exception)
             {
@@ -41,11 +52,40 @@ namespace AreYouGoingBot
             }
         }
 
-        private static async void BotOnMessageReceived(object sender, MessageEventArgs messageEventArgs)
+        public static Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+        {
+            var errorMessage = exception switch
+            {
+                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString()
+            };
+
+            Console.Write(errorMessage);
+            return Task.CompletedTask;
+        }
+        
+        static Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
+            CancellationToken cancellationToken)
+        {
+            var handler = update.Type switch
+            {
+                // UpdateType.Unknown:
+                // UpdateType.ChannelPost:
+                // UpdateType.EditedChannelPost:
+                // UpdateType.ShippingQuery:
+                // UpdateType.PreCheckoutQuery:
+                // UpdateType.Poll:
+                UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
+                UpdateType.EditedMessage => BotOnMessageReceived(botClient, update.EditedMessage!),
+            };
+
+            return handler;
+        }
+
+        private static async Task BotOnMessageReceived(object sender, Message message)
         {
             try
             {
-                var message = messageEventArgs.Message;
                 if (message?.Type != MessageType.Text)
                 {
                     return;
