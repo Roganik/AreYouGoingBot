@@ -14,9 +14,10 @@ namespace AreYouGoingBot
             var cts = new CancellationTokenSource();
             var cancellationToken = cts.Token;
             
+            
             try
             {
-                Bot.Handlers.Init(token, cancellationToken);
+                var handlers = new Bot.Handlers(token, cancellationToken);
                 Console.ReadLine();
                 
                 cts.Cancel(); // stop receiving updates
