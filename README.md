@@ -7,6 +7,4 @@ Commands:
 "+" - add attender to the list;  
 "-" - remove attender from list;  
 "0" - clear the list;  
-"?" - show who is going;  
-"->?" - show the limit of attenders;  
-"->{number}" - set the limit, e.g. ->5
+"?" - show who is going;

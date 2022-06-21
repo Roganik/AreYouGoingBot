@@ -6,12 +6,6 @@ namespace AreYouGoingBot.Bot;
 public class AttendersManager
 {
     private Dictionary<long, List<ChatUser>> _attenders = new();
-
-    public void Init(long chatId, List<ChatUser> users)
-    {
-        _attenders[chatId] = new List<ChatUser>();
-        _attenders[chatId].AddRange(users);
-    }
     
     public bool Contains(ChatUser chatUser)
     {
@@ -38,10 +32,4 @@ public class AttendersManager
     {
         _attenders?.Get(chatId)?.Clear();
     }
-
-    public int Count(long chatId)
-    {
-        return _attenders.Get(chatId)?.Count ?? 0;
-    }
-    
 }

@@ -9,7 +9,5 @@
         public const string WhoIsGoing = "?";
 
         public const string ClearList = "0";
-
-        public const string WhatIsTheLimit = "->?";
     }
 }
