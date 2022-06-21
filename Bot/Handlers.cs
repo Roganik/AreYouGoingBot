@@ -22,7 +22,7 @@ public static class Handlers
 
     private static TelegramBotClient _client;
 
-    private static Dictionary<long, List<ChatUser>> _attenders = new();
+    private static AttendersManager _attenders = new(); 
 
     public static void Init(string telegramBotToken, CancellationToken cancellationToken)
     {
@@ -105,10 +105,10 @@ public static class Handlers
         {
             var file = CheckFileAndFillAttendersList(chatUser);
 
-            if (GetAttendersCount(chatUser.ChatId) < GetAttendersLimitByChatOrDefault(chatUser.ChatId) &&
-                !_attenders[chatUser.ChatId].Contains(chatUser))
+            if (_attenders.Count(chatUser.ChatId) < GetAttendersLimitByChatOrDefault(chatUser.ChatId) &&
+                !_attenders.Contains(chatUser))
             {
-                _attenders[chatUser.ChatId].Add(chatUser);
+                _attenders.Add(chatUser);
 
                 await File.AppendAllTextAsync(file, chatUser.Username + Environment.NewLine);
 
@@ -125,12 +125,13 @@ public static class Handlers
                 File.Create(file);
             }
 
-            if (GetAttendersCount(chatUser.ChatId) == 0)
+            if (_attenders.Count(chatUser.ChatId) == 0)
             {
-                _attenders[chatUser.ChatId] = new List<ChatUser>();
-                _attenders[chatUser.ChatId].AddRange(File.ReadLines(file)
+                var attenders = File.ReadLines(file)
                     .Select(username => new ChatUser(chatUser.ChatId, username))
-                    .ToList());
+                    .ToList();
+                
+                _attenders.Init(chatUser.ChatId, attenders);
             }
 
             return file;
@@ -139,10 +140,8 @@ public static class Handlers
         private static async Task Remove(ChatUser chatUser)
         {
             CheckFileAndFillAttendersList(chatUser);
-            
-            var attender = _attenders.Get(chatUser.ChatId).Last(cu => cu == chatUser);
-            _attenders.Get(chatUser.ChatId).Remove(attender);
-            var usernames = _attenders[chatUser.ChatId].Select(x => x.Username).ToList();
+            _attenders.Remove(chatUser);
+            var usernames = _attenders.GetUsernames(chatUser.ChatId);
             await File.WriteAllTextAsync($"{chatUser.ChatId}.txt",  string.Join(Environment.NewLine, usernames));
 
             await ShowList(chatUser.ChatId);
@@ -166,19 +165,20 @@ public static class Handlers
                 File.Create(file);
             }
 
-            if (GetAttendersCount(chatId) == 0)
+            if (_attenders.Count(chatId) == 0)
             {
-                _attenders[chatId] = new List<ChatUser>();
-                _attenders[chatId].AddRange(File.ReadLines(file)
+                var attenders = File.ReadLines(file)
                     .Select(username => new ChatUser(chatId, username))
-                    .ToList());
+                    .ToList();
+                
+                _attenders.Init(chatId, attenders);
             }
 
-            var text =  string.Join(Environment.NewLine, _attenders
-                .Get(chatId)
-                .Select((chatUser, index) => $"{index+1}. {chatUser.Username}" ));
+            var text =  string.Join(Environment.NewLine, 
+                _attenders.GetUsernames(chatId)
+                .Select((Username, index) => $"{index+1}. {Username}" ));
 
-            if (GetAttendersCount(chatId) == GetAttendersLimitByChatOrDefault(chatId))
+            if (_attenders.Count(chatId) == GetAttendersLimitByChatOrDefault(chatId))
             {
                 text += "\r\nRecruitment Closed.";
             }
@@ -188,7 +188,7 @@ public static class Handlers
 
         private static void Clear(long chatId)
         {
-            _attenders?.Get(chatId)?.Clear();
+            _attenders.RemoveAll(chatId);
             var file = $"{chatId}.txt";
 
             if (File.Exists(file))
@@ -202,10 +202,17 @@ public static class Handlers
             _attendersLimitForChat[chatId] = limit;
             await ShowLimit(chatId);
 
-            if (GetAttendersCount(chatId) >= limit)
+            if (_attenders.Count(chatId) >= limit)
             {
-                _attenders[chatId] = _attenders.Get(chatId).Take(limit).ToList();
-                var usernames = _attenders[chatId].Select(x => x.Username).ToList();
+                var allAttenders = _attenders
+                    .GetUsernames(chatId)
+                    .Take(limit)
+                    .Select(username => new ChatUser(chatId, username))
+                    .ToList();
+                
+                _attenders.RemoveAll(chatId);
+                _attenders.Init(chatId, allAttenders);
+                var usernames = _attenders.GetUsernames(chatId);
                 await File.WriteAllTextAsync($"{chatId}.txt",  string.Join(Environment.NewLine, usernames));
                 await ShowList(chatId);
             }
@@ -240,9 +247,5 @@ public static class Handlers
         {
             return Regex.Replace(text, @"\D", "");
         }
-
-        private static int GetAttendersCount(long chatId)
-        {
-            return _attenders.Get(chatId)?.Count ?? 0;
-        }
+    
 }
