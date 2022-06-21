@@ -12,14 +12,14 @@ namespace AreYouGoingBot.Bot;
 
 public class Handlers
 {
-    private TelegramBotClient _client;
+    private readonly TelegramBotClient _bot;
 
     private readonly AttendersManager _attenders = new();
     
     public Handlers(string telegramBotToken, CancellationToken cancellationToken)
     {
-        _client = new TelegramBotClient(telegramBotToken);
-        _client.StartReceiving(
+        _bot = new TelegramBotClient(telegramBotToken);
+        _bot.StartReceiving(
             updateHandler: HandleUpdateAsync,
             pollingErrorHandler: PollingErrorHandler,
             cancellationToken: cancellationToken
@@ -113,7 +113,7 @@ public class Handlers
         
         if (!string.IsNullOrWhiteSpace(text))
         {
-            await _client.SendTextMessageAsync(chatId, text);
+            await _bot.SendTextMessageAsync(chatId, text);
         }
     }
 }
