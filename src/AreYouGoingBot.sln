@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AreYouGoingBot", "AreYouGoingBot.csproj", "{43A7FA17-A285-4C6E-82AC-CA197FFE414D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AreYouGoingBot", "AreYouGoingBot\AreYouGoingBot.csproj", "{43A7FA17-A285-4C6E-82AC-CA197FFE414D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
