@@ -5,7 +5,7 @@ namespace AreYouGoingBot.Bot;
 
 public class AttendersManager
 {
-    private Dictionary<long, List<ChatUser>> _attenders = new();
+    private readonly Dictionary<long, List<ChatUser>> _attenders = new();
     
     public bool Contains(ChatUser chatUser)
     {

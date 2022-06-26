@@ -4,7 +4,7 @@ namespace AreYouGoingBot
 {
     public static class DictionaryHelper
     {
-        public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = default)
+        public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue = default) where TKey : notnull
         {
             if (!dictionary.TryGetValue(key, out var value))
             {
