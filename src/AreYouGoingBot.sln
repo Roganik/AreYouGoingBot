@@ -6,6 +6,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Root", "Root", "{DE581524-A
 	ProjectSection(SolutionItems) = preProject
 		..\README.md = ..\README.md
 		..\.gitignore = ..\.gitignore
+		..\Dockerfile = ..\Dockerfile
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AreYouGoingBot.Storage", "AreYouGoingBot.Storage\AreYouGoingBot.Storage.csproj", "{786EEC16-A257-4CD8-80E8-6368F8F786B8}"
