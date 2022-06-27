@@ -1,0 +1,28 @@
+services:
+  migrator:
+    image: ghcr.io/roganik/areyougoingbot:latest
+    command: dotnet AreYouGoingBot.Storage.Migrations.dll
+    env_file: env.conf
+    volumes:
+      - /root/Docker/are-you-going/AreYouGoing.sqlite:/app/AreYouGoing.sqlite
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  host:
+    image: ghcr.io/roganik/areyougoingbot:latest
+    command: dotnet AreYouGoingBot.dll
+    env_file: env.conf
+    volumes:
+      - /root/Docker/are-you-going/AreYouGoing.sqlite:/app/AreYouGoing.sqlite
+    depends_on:
+      - migrator
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
