@@ -1,3 +1,4 @@
+using AreYouGoingBot.Storage;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -10,9 +11,9 @@ public class Handlers
 {
     private readonly TelegramBotClient _bot;
 
-    private readonly AttendersManager _attenders = new();
+    private readonly AttendersManager _attenders;
     
-    public Handlers(string telegramBotToken, CancellationToken cancellationToken)
+    public Handlers(string telegramBotToken, CancellationToken cancellationToken, AttendersDb db)
     {
         _bot = new TelegramBotClient(telegramBotToken);
         _bot.StartReceiving(
@@ -20,6 +21,7 @@ public class Handlers
             pollingErrorHandler: PollingErrorHandler,
             cancellationToken: cancellationToken
         );
+        _attenders = new AttendersManager(db);
     }
     
     private Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -66,7 +68,7 @@ public class Handlers
                 username = message.From.Username;
             }
 
-            var chatUser = new ChatUser(message.Chat.Id, username);
+            var chatUser = new ChatUser(message.Chat.Id, username, message.From.Id);
 
             var task = message.Text switch
             {

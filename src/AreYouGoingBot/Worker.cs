@@ -1,3 +1,4 @@
+using AreYouGoingBot.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -8,12 +9,12 @@ public class Worker : BackgroundService
 {
     private readonly CancellationTokenSource _cts;
 
-    public Worker(ILoggerFactory logger, IConfiguration cfg)
+    public Worker(ILoggerFactory logger, IConfiguration cfg, AttendersDb db)
     {
         var token = cfg["TELEGRAM_BOT_TOKEN"];
         _cts = new CancellationTokenSource();
         var cancellationToken = _cts.Token;
-        var handlers = new Bot.Handlers(token, cancellationToken);
+        var handlers = new Bot.Handlers(token, cancellationToken, db);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
