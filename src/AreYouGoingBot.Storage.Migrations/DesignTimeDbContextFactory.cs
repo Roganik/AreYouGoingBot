@@ -1,4 +1,5 @@
 using System.Reflection;
+using AreYouGoingBot.Cfg;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -10,19 +11,10 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AttendersD
     public AttendersDb CreateDbContext(string[] args)
     {
         var cfg = new ConfigurationBuilder()
-            .AddUserSecrets(Assembly.GetExecutingAssembly())
+            .AddAppConfigurationProviders()
             .Build();
 
-        var connectionString = cfg.GetConnectionString("AreYouGoingDb");
-        
-        Console.WriteLine("Connection String = " + connectionString);
-        if (string.IsNullOrEmpty(connectionString))
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Connection sting looks empty. Please configure it with set_secrets.sh");
-            Console.ResetColor();
-        }
-
+        var connectionString = cfg.GetAppConnectionString();
         var dbContextOptions = new DbContextOptionsBuilder<AttendersDb>()
             .UseSqlite(connectionString, builder => builder.MigrationsAssembly("AreYouGoingBot.Storage.Migrations"))
             .Options;

@@ -5,7 +5,6 @@
         <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <UserSecretsId>1c74437f-d1ed-436c-8d81-037effafa144</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,13 +15,12 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.6" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
         <PackageReference Include="Telegram.Bot" Version="18.0.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AreYouGoingBot.Cfg\AreYouGoingBot.Cfg.csproj" />
       <ProjectReference Include="..\AreYouGoingBot.Storage\AreYouGoingBot.Storage.csproj" />
     </ItemGroup>
 

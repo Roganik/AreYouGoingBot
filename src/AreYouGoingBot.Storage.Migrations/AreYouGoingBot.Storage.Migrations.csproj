@@ -4,13 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        
-        <UserSecretsId>1c74437f-d1ed-436c-8d81-037effafa144</UserSecretsId>
-        
         <OutputType>Exe</OutputType> 
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\AreYouGoingBot.Cfg\AreYouGoingBot.Cfg.csproj" />
       <ProjectReference Include="..\AreYouGoingBot.Storage\AreYouGoingBot.Storage.csproj" />
     </ItemGroup>
 
@@ -21,7 +19,6 @@
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.6" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     </ItemGroup>
 
 </Project>
