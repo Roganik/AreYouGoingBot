@@ -1,4 +1,5 @@
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace AreYouGoingBot.Bot;
 
@@ -10,7 +11,12 @@ public class Commands
     {
         _bot = bot;
     }
-    
+
+    public Task SendTyping(long chatId)
+    {
+        return _bot.SendChatActionAsync(chatId, ChatAction.Typing);
+    }
+
     public async Task ShowParticipants(long chatId, List<string> usernames)
     {
         if (!usernames.Any())

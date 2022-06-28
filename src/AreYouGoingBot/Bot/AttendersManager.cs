@@ -15,7 +15,7 @@ public class AttendersManager
         _db = dbDb;
     }
 
-    private ChatEvent GetEventWithAttenders(long chatId)
+    private ChatEvent GetEventWithAttendersSync(long chatId)
     {
         var @event = _db.ChatEvents
             .Include(e => e.Participants)
@@ -28,16 +28,16 @@ public class AttendersManager
 
         return @event;
     }
-    
+
     public bool Contains(ChatUser chatUser)
     {
-        var @event = GetEventWithAttenders(chatUser.ChatId);
+        var @event = GetEventWithAttendersSync(chatUser.ChatId);
         return @event.Participants.Any(a => a.TelegramUserId == chatUser.UserId);
     }
 
     public void Add(ChatUser chatUser)
     {
-        var @event = GetEventWithAttenders(chatUser.ChatId);
+        var @event = GetEventWithAttendersSync(chatUser.ChatId);
         
         var attender = @event.Participants.FirstOrDefault(a => a.TelegramUserId == chatUser.UserId);
         if (attender == null)
@@ -60,7 +60,7 @@ public class AttendersManager
 
     public void Remove(ChatUser chatUser)
     {
-        var @event = GetEventWithAttenders(chatUser.ChatId);
+        var @event = GetEventWithAttendersSync(chatUser.ChatId);
         var attender = @event.Participants.FirstOrDefault(a => a.TelegramUserId == chatUser.UserId);
 
         if (attender == null)
@@ -75,14 +75,14 @@ public class AttendersManager
 
     public List<string> GetUsernames(long chatId)
     {
-        var @event = GetEventWithAttenders(chatId);
+        var @event = GetEventWithAttendersSync(chatId);
         
         return @event.Participants.Select(x => x.Name).ToList();
     }
 
     public void RemoveAll(long chatId)
     {
-        var @event = GetEventWithAttenders(chatId);
+        var @event = GetEventWithAttendersSync(chatId);
         _db.Remove(@event);
         _db.SaveChanges();
     }

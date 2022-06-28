@@ -106,7 +106,9 @@ public class Handlers
     
     private async Task ShowList(long chatId)
     {
+        var typingJob = _commands.SendTyping(chatId);
         var usernames = _attenders.GetUsernames(chatId);
+        await typingJob;
         await _commands.ShowParticipants(chatId, usernames);
     }
 }
