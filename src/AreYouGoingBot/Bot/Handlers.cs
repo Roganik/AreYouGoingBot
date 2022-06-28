@@ -12,7 +12,8 @@ public class Handlers
     private readonly TelegramBotClient _bot;
 
     private readonly AttendersManager _attenders;
-    
+    private readonly Commands _commands;
+
     public Handlers(string telegramBotToken, CancellationToken cancellationToken, AttendersDb db)
     {
         _bot = new TelegramBotClient(telegramBotToken);
@@ -22,6 +23,7 @@ public class Handlers
             cancellationToken: cancellationToken
         );
         _attenders = new AttendersManager(db);
+        _commands = new Commands(_bot);
     }
     
     private Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -104,14 +106,7 @@ public class Handlers
     
     private async Task ShowList(long chatId)
     {
-        var text =  string.Join(Environment.NewLine, 
-            _attenders.GetUsernames(chatId)
-                .Select((Username, index) => $"{index+1}. {Username}" ));
-
-        
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            await _bot.SendTextMessageAsync(chatId, text);
-        }
+        var usernames = _attenders.GetUsernames(chatId);
+        await _commands.ShowParticipants(chatId, usernames);
     }
 }
