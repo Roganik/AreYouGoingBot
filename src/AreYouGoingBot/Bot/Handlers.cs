@@ -1,4 +1,5 @@
 using AreYouGoingBot.Storage;
+using Microsoft.VisualBasic;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -49,11 +50,47 @@ public class Handlers
             // UpdateType.ShippingQuery:
             // UpdateType.PreCheckoutQuery:
             // UpdateType.Poll:
+            UpdateType.CallbackQuery      => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),
             UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
             UpdateType.EditedMessage => BotOnMessageReceived(botClient, update.EditedMessage!),
         };
 
         return handler;
+    }
+    
+    private async Task BotOnCallbackQueryReceived(ITelegramBotClient botClient, CallbackQuery callbackQuery)
+    {
+        await botClient.AnswerCallbackQueryAsync(
+            callbackQueryId: callbackQuery.Id,
+            text: $"Received {callbackQuery.Data}. Updating participants...");
+        
+        // todo: similar logic in BotOnMessageReceived, refactor.
+        var msg = callbackQuery.Message;
+        var username = $"{callbackQuery.From.FirstName} {callbackQuery.From.LastName}";
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            username = callbackQuery.From.Username;
+        }
+        var chatUser = new ChatUser(msg.Chat.Id, username, callbackQuery.From.Id);
+
+        if (callbackQuery.Data == AddUser)
+        {
+            if (!_attenders.Contains(chatUser))
+            {
+                _attenders.Add(chatUser);
+            }
+        }
+        else if (callbackQuery.Data == RemoveUser)
+        {
+            _attenders.Remove(chatUser);
+        }
+        else
+        {
+            throw new NotImplementedException($"callback not supported: {callbackQuery.Data}");
+        }
+
+        await _commands.DeleteMessage(msg.Chat.Id, msg.MessageId);
+        await ShowList(msg.Chat.Id);
     }
 
     private async Task BotOnMessageReceived(object sender, Message message)
