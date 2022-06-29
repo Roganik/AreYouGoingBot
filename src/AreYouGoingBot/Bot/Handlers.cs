@@ -53,6 +53,7 @@ public class Handlers
             UpdateType.CallbackQuery      => BotOnCallbackQueryReceived(botClient, update.CallbackQuery!),
             UpdateType.Message => BotOnMessageReceived(botClient, update.Message!),
             UpdateType.EditedMessage => BotOnMessageReceived(botClient, update.EditedMessage!),
+            _ => Task.CompletedTask, 
         };
 
         return handler;
