@@ -8,6 +8,7 @@ Local debug:
 * Have fun
 
 Bot Commands:
+
 "+" - add attender to the list;  
 "-" - remove attender from list;  
 "0" - clear the list;  
