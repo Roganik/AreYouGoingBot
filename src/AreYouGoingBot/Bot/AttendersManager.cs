@@ -86,4 +86,29 @@ public class AttendersManager
         _db.Remove(@event);
         _db.SaveChanges();
     }
+
+    public async Task SaveEventMessageId(long chatId, int messageId)
+    {
+        var @event = await _db.ChatEvents
+            .FirstOrDefaultAsync(e => e.TelegramChatId == chatId);
+        if (@event == default)
+        {
+            return;
+        }
+
+        @event.TelegramEventMessageId = messageId;
+        _db.Update(@event);
+        await _db.SaveChangesAsync();
+    }
+    
+    public async Task<int> GetEventMessageId(long chatId)
+    {
+        var telegramEventMessageId = await _db.ChatEvents
+            .Where(e => e.TelegramChatId == chatId)
+            .Select(e => e.TelegramEventMessageId)
+            .FirstOrDefaultAsync();
+
+        return telegramEventMessageId;
+    }
+    
 }

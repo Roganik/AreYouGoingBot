@@ -2,6 +2,7 @@
 using AreYouGoingBot.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AreYouGoingBot.Storage.Migrations.Migrations
 {
     [DbContext(typeof(AttendersDb))]
-    partial class AttendersDbModelSnapshot : ModelSnapshot
+    [Migration("20220701151041_ChatEvent_AddTelegramEventMessageId")]
+    partial class ChatEvent_AddTelegramEventMessageId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.6");

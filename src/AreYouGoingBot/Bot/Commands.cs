@@ -1,5 +1,6 @@
 using AreYouGoingBot.Constants;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -19,11 +20,11 @@ public class Commands
         return _bot.SendChatActionAsync(chatId, ChatAction.Typing);
     }
 
-    public Task ShowParticipants(long chatId, List<string> usernames)
+    public Task<Message?> ShowParticipants(long chatId, List<string> usernames)
     {
         if (!usernames.Any())
         {
-            return Task.CompletedTask;
+            return Task.FromResult<Message>(null);
         }
 
         var text =  string.Join(Environment.NewLine, 
@@ -42,7 +43,7 @@ public class Commands
 
         return _bot.SendTextMessageAsync(chatId: chatId,
             text: text,
-            replyMarkup: inlineKeyboard);
+            replyMarkup: inlineKeyboard)!;
     }
 
     public Task DeleteMessage(long chatId, int messageId)

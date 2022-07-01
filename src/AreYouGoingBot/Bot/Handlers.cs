@@ -89,8 +89,7 @@ public class Handlers
         {
             throw new NotImplementedException($"callback not supported: {callbackQuery.Data}");
         }
-
-        await _commands.DeleteMessage(msg.Chat.Id, msg.MessageId);
+        
         await ShowList(msg.Chat.Id);
     }
 
@@ -145,8 +144,19 @@ public class Handlers
     private async Task ShowList(long chatId)
     {
         var typingJob = _commands.SendTyping(chatId);
+
+        var oldMsgId = await _attenders.GetEventMessageId(chatId);
         var usernames = _attenders.GetUsernames(chatId);
+        
         await typingJob;
-        await _commands.ShowParticipants(chatId, usernames);
+        var msg = await _commands.ShowParticipants(chatId, usernames);
+        if (msg == null)
+        {
+            // no new message were posted
+            return;
+        }
+        
+        await _attenders.SaveEventMessageId(chatId, msg.MessageId);
+        await _commands.DeleteMessage(chatId, oldMsgId);
     }
 }
