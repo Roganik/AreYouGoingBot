@@ -45,6 +45,21 @@ public class Commands
             text: text,
             replyMarkup: inlineKeyboard)!;
     }
+    
+    public Task<Message?> ShowHistoryParticipants(long chatId, List<string> usernames)
+    {
+        if (!usernames.Any())
+        {
+            return Task.FromResult<Message>(null);
+        }
+
+        var text =  string.Join(Environment.NewLine, 
+            usernames
+                .Select((Username, index) => $"{index+1}. {Username}" ));
+
+        return _bot.SendTextMessageAsync(chatId: chatId,
+            text: $"Last event participants:{Environment.NewLine}{text}")!;
+    }
 
     public Task DeleteMessage(long chatId, int messageId)
     {
