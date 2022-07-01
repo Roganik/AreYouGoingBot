@@ -48,6 +48,10 @@ public class Commands
 
     public Task DeleteMessage(long chatId, int messageId)
     {
+        if (messageId == default)
+        {
+            return Task.CompletedTask;
+        } 
         return _bot.DeleteMessageAsync(chatId, messageId);
     }
 }

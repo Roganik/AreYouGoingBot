@@ -14,7 +14,7 @@ public class Worker : BackgroundService
         var token = cfg["TELEGRAM_BOT_TOKEN"];
         _cts = new CancellationTokenSource();
         var cancellationToken = _cts.Token;
-        var handlers = new Bot.Handlers(token, cancellationToken, db);
+        var handlers = new Bot.Handlers(token, cancellationToken, db, logger);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -1,4 +1,5 @@
 using AreYouGoingBot.Storage;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -14,8 +15,9 @@ public class Handlers
 
     private readonly AttendersManager _attenders;
     private readonly Commands _commands;
+    private readonly ILogger _logger;
 
-    public Handlers(string telegramBotToken, CancellationToken cancellationToken, AttendersDb db)
+    public Handlers(string telegramBotToken, CancellationToken cancellationToken, AttendersDb db, ILoggerFactory loggerFactory)
     {
         _bot = new TelegramBotClient(telegramBotToken);
         _bot.StartReceiving(
@@ -25,6 +27,7 @@ public class Handlers
         );
         _attenders = new AttendersManager(db);
         _commands = new Commands(_bot);
+        _logger = loggerFactory.CreateLogger("BotHandlers");
     }
     
     private Task PollingErrorHandler(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
@@ -35,7 +38,7 @@ public class Handlers
             _ => exception.ToString()
         };
 
-        Console.Write(errorMessage);
+        _logger.Log(LogLevel.Error, "PollingErrorHandler: {0}", errorMessage);
         return Task.CompletedTask;
     }
     
@@ -114,7 +117,10 @@ public class Handlers
                 AddUser => AddChatUserAndShowList(chatUser),
                 RemoveUser => Remove(chatUser),
                 WhoIsGoing => ShowList(chatUser.ChatId),
-                ClearList => Task.Run(() => _attenders.RemoveAll(chatUser.ChatId)),
+                ClearList => Task.Run(() =>
+                {
+                    _attenders.RemoveAll(chatUser.ChatId);
+                }),
                 _ => Task.Run(() => { })
             };
             
