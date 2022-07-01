@@ -83,6 +83,11 @@ public class AttendersManager
     public void RemoveAll(long chatId)
     {
         var @event = GetEventWithAttendersSync(chatId);
+        if (@event.ChatEventId == default)
+        {
+            return;
+        }
+        
         _db.Remove(@event);
         _db.SaveChanges();
     }
