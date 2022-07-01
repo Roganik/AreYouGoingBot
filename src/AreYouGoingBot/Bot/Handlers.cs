@@ -117,19 +117,7 @@ public class Handlers
                 AddUser => AddChatUserAndShowList(chatUser),
                 RemoveUser => Remove(chatUser),
                 WhoIsGoing => ShowList(chatUser.ChatId),
-                ClearList => async () =>
-                {
-                    var chatId = chatUser.ChatId;
-                    
-                    var typingJob = _commands.SendTyping(chatId);
-                    var oldMsgId = await _attenders.GetEventMessageId(chatId);
-                    var usernames = _attenders.GetUsernames(chatId);
-                    await typingJob;
-                    await _commands.ShowHistoryParticipants(chatId, usernames);
-                    await _commands.DeleteMessage(chatId, oldMsgId);
-                    
-                    _attenders.RemoveAll(chatUser.ChatId);
-                },
+                ClearList => EndEvent(chatUser.ChatId),
                 _ => Task.Run(() => { })
             };
             
@@ -154,6 +142,19 @@ public class Handlers
     {
         _attenders.Remove(chatUser);
         await ShowList(chatUser.ChatId);
+    }
+
+
+    private async Task EndEvent(long chatId)
+    {
+        var typingJob = _commands.SendTyping(chatId);
+        var oldMsgId = await _attenders.GetEventMessageId(chatId);
+        var usernames = _attenders.GetUsernames(chatId);
+        await typingJob;
+        await _commands.ShowHistoryParticipants(chatId, usernames);
+        await _commands.DeleteMessage(chatId, oldMsgId);
+                
+        _attenders.RemoveAll(chatId);
     }
     
     private async Task ShowList(long chatId)
