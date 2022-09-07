@@ -21,7 +21,7 @@ jobs:
         run: echo ${{ github.run_number }}
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
       -
         # Setting up Docker Buildx with docker-container driver is required
         # at the moment to be able to use a subdirectory with Git context
@@ -30,7 +30,7 @@ jobs:
       -
         if: ${{ github.ref == 'refs/heads/master' }}
         name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
