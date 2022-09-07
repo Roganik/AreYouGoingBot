@@ -23,8 +23,10 @@ jobs:
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       -
+        # Setting up Docker Buildx with docker-container driver is required
+        # at the moment to be able to use a subdirectory with Git context
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       -
         if: ${{ github.ref == 'refs/heads/master' }}
         name: Login to GitHub Container Registry
@@ -33,12 +35,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        # Setting up Docker Buildx with docker-container driver is required
-        # at the moment to be able to use a subdirectory with Git context
-        if: ${{ github.ref == 'refs/heads/master' }}
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
       -
         name: Build Docker images. (And push if branch == master)
         uses: docker/build-push-action@v3
